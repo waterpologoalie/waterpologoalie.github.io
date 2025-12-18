@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Mini Wordle</title>
+  <style>
+    body { font-family: Arial; text-align: center; }
+    .grid { display: grid; grid-template-columns: repeat(5, 50px); gap: 5px; justify-content: center; margin-bottom: 10px; }
+    .cell { width: 50px; height: 50px; border: 2px solid #ccc; display: flex; justify-content: center; align-items: center; font-weight: bold; text-transform: uppercase; font-size: 22px; }
+    .correct { background: #6aaa64; color: white; }
+    .present { background: #c9b458; color: white; }
+    .absent { background: #787c7e; color: white; }
+    .row { margin: 10px 0; }
+    .msg { margin-top: 10px; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>Mini Wordle</h1>
+  <div id="wordle-game"></div>
+
+  <script>
+    (function () {
+      const WORDS = ["GOALS", "SHEEP", "CRANE", "BRICK", "NURSE"];
+      const answer = WORDS[Math.floor(Math.random() * WORDS.length)];
+      const rows = 6, cols = 5;
+      let row = 0, gameOver = false;
+
+      const container = document.getElementById("wordle-game");
+
+      const grid = document.createElement("div");
+      grid.className = "grid";
+      container.appendChild(grid);
+
+      for (let i = 0; i < rows * cols; i++) {
+        const cell = document.createElement("div");
+        cell.className = "cell";
+        grid.appendChild(cell);
+      }
+
+      const controls = document.createElement("div");
+      controls.className = "row";
+      container.appendChild(controls);
+
+      const input = document.createElement("input");
+      input.maxLength = cols;
+      input.placeholder = "Type 5 letters";
+      controls.appendChild(input);
+
+      const button = document.createElement("button");
+      button.textContent = "Submit";
+      controls.appendChild(button);
+
+      const msg = document.createElement("div");
+      msg.className = "msg";
+      container.appendChild(msg);
+
+      function renderGuess(guess) {
+        const result = Array(cols).fill("absent");
+        const counts = {};
+        for (let i = 0; i < cols; i++) counts[answer[i]] = (counts[answer[i]] || 0) + 1;
+        for (let i = 0; i < cols; i++) if (guess[i] === answer[i]) { result[i] = "correct"; counts[guess[i]]--; }
+        for (let i = 0; i < cols; i++) if (result[i] === "absent" && counts[guess[i]] > 0) { result[i] = "present"; counts[guess[i]]--; }
+        for (let i = 0; i < cols; i++) { const cell = grid.children[row * cols + i]; cell.textContent = guess[i]; cell.className = `cell ${result[i]}`; }
+      }
+
+      function setMessage(text){ msg.textContent = text; }
+      function endGame(finalText){ gameOver = true; input.disabled = true; button.disabled = true; setMessage(finalText); }
+
+      function submit() {
+        if(gameOver) return;
+        const guess = (input.value||"").toUpperCase().trim();
+        if(guess.length!==cols){ setMessage("Guess must be exactly 5 letters."); return; }
+        if(!/^[A-Z]{5}$/.test(guess)){ setMessage("Letters only (A–Z)."); return; }
+        setMessage(""); renderGuess(guess);
+        if(guess===answer){ endGame("You win! ✅"); return; }
+        row++; input.value="";
+        if(row>=rows){ endGame(`Out of guesses. Answer was: ${answer}`); }
+      }
+
+      button.addEventListener("click", submit);
+      input.addEventListener("keydown", (e)=>{ if(e.key==="Enter") submit(); });
+    })();
+  </script>
+</body>
+</html>
